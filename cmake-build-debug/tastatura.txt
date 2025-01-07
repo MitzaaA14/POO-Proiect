@@ -1,0 +1,36 @@
+Produse:
+Avion
+100000
+Aeronautica
+size
+350
+Pat
+100
+Mobila
+marime
+180x200
+Laptop
+3500
+Electronic - High-performance laptop
+Apple
+5
+Food - Fresh red apple
+T-Shirt
+50
+Clothing - Comfortable cotton t-shirt
+Utilizatori:
+john_doe
+john@example.com
+filip_haha
+filip@example.com
+jane_smith
+jane@example.com
+Comenzi:
+user:john_doe
+Laptop
+user:jane_smith
+T-Shirt
+user:filip_haha
+Laptop
+Apple
+T-Shirt

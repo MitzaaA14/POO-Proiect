@@ -4,6 +4,11 @@ Avion
 Aeronautica
 size
 350
+Lingura
+10
+Bucatarie
+size
+5
 Pat
 100
 Mobila

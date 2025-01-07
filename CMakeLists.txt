@@ -49,6 +49,14 @@ include(cmake/Options.cmake)
 add_executable(${MAIN_EXECUTABLE_NAME}
     main.cpp
     generated/src/Helper.cpp
+        User.cpp
+        User.h
+        Product.h
+        Product.cpp
+        Order.h
+        Order.cpp
+        Catalog.h
+        Catalog.cpp
 )
 
 include(cmake/CompilerFlags.cmake)

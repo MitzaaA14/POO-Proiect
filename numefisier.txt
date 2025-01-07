@@ -1,14 +1,4 @@
 Produse:
-Avion
-100000
-Aeronautica
-size
-350
-Pat
-100
-Mobila
-marime
-180x200
 Laptop
 3500
 Electronic - High-performance laptop

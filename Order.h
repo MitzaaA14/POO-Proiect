@@ -1,4 +1,3 @@
-// Order.h
 #ifndef ORDER_H
 #define ORDER_H
 
@@ -16,13 +15,13 @@ public:
     Order(const User& user) : user(user) {}
 
     void addProduct(const Product& product);
-
     double calculateTotal() const;
-
     void display() const;
+
+    // Member operator overloading
+    Order& operator+=(const Product& product);
+
     friend std::ostream& operator<<(std::ostream& os, const Order& order);
 };
-
-
 
 #endif // ORDER_H

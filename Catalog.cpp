@@ -2,13 +2,11 @@
 #include <iostream>
 #include <fstream>
 #include <algorithm>
-#include <stdexcept>
 
-// Implementarea class Catalog
 std::string userPrefix = "user:";
 
-
 std::istream& operator>>(std::istream& is, Catalog& catalog) {
+    Logger::getInstance() += "Starting data input";
     std::cout << "Introdu datele" << std::endl;
 
     if (!catalog.hibridLoading) {
@@ -17,28 +15,27 @@ std::istream& operator>>(std::istream& is, Catalog& catalog) {
     }
 
     catalog.loadOrders(is);
-
     return is;
 }
 
-void Catalog::loadOrders(std::istream& is ) {
+void Catalog::loadOrders(std::istream& is) {
     std::string username, produs;
 
     while (1) {
-        std::cout << "nume utilizator pentru comanda:  (comenzi introduse: " << orders.size() << ")" << std::endl;
+        std::cout << "nume utilizator pentru comanda: (comenzi introduse: "
+                  << orders.size() << ")" << std::endl;
         is >> username;
 
         if (username.find(".next") != std::string::npos) {
             return;
         }
 
-        auto userIt = std::find_if(users.begin(), users.end(), [&username](const User& u) {
-            return u.getUsername() == username;
-        });
+        auto userIt = std::find_if(users.begin(), users.end(),
+                                   [&username](const User& u) { return u.getUsername() == username; });
 
         if (userIt == users.end()) {
-            std::cout << "utilizatorul nu a fost gasit" << std::endl;
-            continue;
+            Logger::getInstance() += "User not found: " + username;
+            throw ProductNotFoundException(username);
         }
 
         Order order(*userIt);
@@ -50,32 +47,31 @@ void Catalog::loadOrders(std::istream& is ) {
                 break;
             }
 
-            auto productIt = std::find_if(products.begin(), products.end(), [&produs](const std::unique_ptr<Product>& p) {
-                return p->getName() == produs;
-            });
+            auto productIt = std::find_if(products.begin(), products.end(),
+                                          [&produs](const std::unique_ptr<Product>& p) { return p->getName() == produs; });
 
             if (productIt == products.end()) {
-                std::cerr << "product not found: " << produs << std::endl;
-                continue;
+                Logger::getInstance() += "Product not found: " + produs;
+                throw ProductNotFoundException(produs);
             }
 
             order.addProduct(**productIt);
+            Logger::getInstance() += "Added product " + produs + " to order for " + username;
 
             std::cout << "scrie .next ca sa finalizezi" << std::endl;
         }
         orders.push_back(std::move(order));
 
-
-
         std::cout << "scrie .next ca sa finalizezi" << std::endl;
     }
 }
 
-void Catalog::loadUsers(std::istream& is ) {
+void Catalog::loadUsers(std::istream& is) {
     std::string nume, email;
 
     while (1) {
-        std::cout << "nume utilizator:  (utilizatori introdusi: " << users.size() << ")" << std::endl;
+        std::cout << "nume utilizator: (utilizatori introdusi: "
+                  << users.size() << ")" << std::endl;
         is >> nume;
 
         if (nume.find(".next") != std::string::npos) {
@@ -85,18 +81,24 @@ void Catalog::loadUsers(std::istream& is ) {
         std::cout << "email:" << std::endl;
         is >> email;
 
+        if (!isValidEmail(email)) {
+            throw InvalidEmailException(email);
+        }
+
         users.emplace_back(nume, email);
+        Logger::getInstance() += "Added user: " + nume + " with email: " + email;
 
         std::cout << "scrie .next ca sa treci la introducere comenzi" << std::endl;
     }
 }
 
-void Catalog::loadProducts(std::istream& is ) {
-    std::string tip, nume, spec, tipSpec;
+void Catalog::loadProducts(std::istream& is) {
+    std::string tip, nume, spec, tipSpec, priceStr;
     double price;
 
     while (1) {
-        std::cout << "Tip produs (electronic/food/clothing) - ai adaugat pana acum: " << products.size() << std::endl;
+        std::cout << "Tip produs (electronic/food/clothing) - ai adaugat pana acum: "
+                  << products.size() << std::endl;
         is >> tip;
 
         if (tip.find(".next") != std::string::npos) {
@@ -107,30 +109,36 @@ void Catalog::loadProducts(std::istream& is ) {
         is >> nume;
 
         std::cout << "Pret:" << std::endl;
-        is >> price;
+        is >> priceStr;
+
+        try {
+            price = Product::validateAndParsePrice(priceStr);
+        } catch (const InvalidPriceException& e) {
+            Logger::getInstance() += std::string("Price validation failed: ") + e.what();
+            throw;
+        }
 
         if (tip.find("electronic") != std::string::npos) {
             std::cout << "Specificatii:" << std::endl;
             is >> spec;
-
             products.push_back(std::make_unique<Electronic>(nume, price, spec));
+
         } else if (tip.find("food") != std::string::npos) {
             std::cout << "Specificatii:" << std::endl;
             is >> spec;
-
             products.push_back(std::make_unique<Food>(nume, price, spec));
+
         } else if (tip.find("clothing") != std::string::npos) {
             std::cout << "Specificatii:" << std::endl;
             is >> spec;
-
             products.push_back(std::make_unique<Clothing>(nume, price, spec));
+
         } else {
             std::cout << "Nume Specificatii:" << std::endl;
-
             is >> tipSpec;
-            std::cout << "Specificatii:" << std::endl;
 
-            if (tipSpec.compare("size") == 0) {
+            std::cout << "Specificatii:" << std::endl;
+            if (tipSpec == "size") {
                 int intSpec;
                 is >> intSpec;
                 products.push_back(std::make_unique<Generic<int>>(nume, price, tip, tipSpec, intSpec));
@@ -140,6 +148,7 @@ void Catalog::loadProducts(std::istream& is ) {
             }
         }
 
+        Logger::getInstance() += "Added product: " + nume + " of type: " + tip;
         std::cout << "scrie .next ca sa treci la introducere utilizatori" << std::endl;
     }
 }
@@ -147,10 +156,12 @@ void Catalog::loadProducts(std::istream& is ) {
 void Catalog::loadFromFile(const std::string& fileName) {
     std::ifstream file(fileName);
     if (!file) {
+        Logger::getInstance() += "Failed to open file: " + fileName;
         throw std::runtime_error("Error: Could not open file " + fileName);
     }
 
     loadData(file);
+    Logger::getInstance() += "Successfully loaded data from file: " + fileName;
 }
 
 void Catalog::loadData(std::ifstream& input) {
@@ -169,113 +180,95 @@ void Catalog::loadData(std::ifstream& input) {
             continue;
         }
 
-        if (section == "produse") {
-            std::string name, description;
-            double price;
+        try {
+            if (section == "produse") {
+                // Product loading logic...
+                std::string name = line;
+                double price;
+                input >> price;
+                input.ignore();
 
-            name = line;
-            if (!(input >> price)) {
-                continue;
-            }
-            input.ignore();
-            std::getline(input, description);
+                std::string description;
+                std::getline(input, description);
 
-            if (description.find("Electronic") != std::string::npos) {
-                products.push_back(std::make_unique<Electronic>(name, price, "1 year"));
-            } else if (description.find("Food") != std::string::npos) {
-                products.push_back(std::make_unique<Food>(name, price, "2025-12-31"));
-            } else if (description.find("Clothing") != std::string::npos) {
-                products.push_back(std::make_unique<Clothing>(name, price, "M"));
-            } else {
-                std::string tipSpec;
-                std::getline(input, tipSpec);
-
-                if (tipSpec.compare("size") == 0) {
-                    int intSpec;
-
-                    input >> intSpec;
-                    input.ignore();
-                    products.push_back(std::make_unique<Generic<int>>(name, price,description , tipSpec, intSpec));
+                if (description.find("Electronic") != std::string::npos) {
+                    products.push_back(std::make_unique<Electronic>(name, price, "1 year"));
+                } else if (description.find("Food") != std::string::npos) {
+                    products.push_back(std::make_unique<Food>(name, price, "2025-12-31"));
+                } else if (description.find("Clothing") != std::string::npos) {
+                    products.push_back(std::make_unique<Clothing>(name, price, "M"));
                 } else {
-                    std::string strSpec;
+                    std::string tipSpec;
+                    std::getline(input, tipSpec);
 
-                    input >> strSpec;
-                    input.ignore();
-                    products.push_back(std::make_unique<Generic<std::string>>(name, price, description, tipSpec, strSpec));
+                    if (tipSpec == "size") {
+                        int intSpec;
+                        input >> intSpec;
+                        input.ignore();
+                        products.push_back(std::make_unique<Generic<int>>(
+                                name, price, description, tipSpec, intSpec));
+                    } else {
+                        std::string strSpec;
+                        input >> strSpec;
+                        input.ignore();
+                        products.push_back(std::make_unique<Generic<std::string>>(
+                                name, price, description, tipSpec, strSpec));
+                    }
                 }
             }
+            else if (section == "utilizatori") {
+                std::string username = line;
+                std::string email;
+                std::getline(input, email);
 
-        } else if (section == "utilizatori") {
-            std::string username, email;
+                if (!isValidEmail(email)) {
+                    throw InvalidEmailException(email);
+                }
 
-            username = line;
-            if (!std::getline(input, email)) {
-                continue;
+                users.emplace_back(username, email);
             }
+            else if (section == "comenzi") {
+                if (hibridLoading) continue;
 
-            users.emplace_back(username, email);
-        } else if (section == "comenzi") {
-            if (hibridLoading) {
-                continue;
-            }
-
-            std::string productName;
-            Order* current_order = nullptr;
-
-            do {
                 if (line.rfind(userPrefix, 0) == 0) {
                     std::string username = line.substr(userPrefix.length());
-
-                    auto userIt = std::find_if(users.begin(), users.end(), [&username](const User& u) {
-                        return u.getUsername() == username;
-                    });
+                    auto userIt = std::find_if(users.begin(), users.end(),
+                                               [&username](const User& u) { return u.getUsername() == username; });
 
                     if (userIt == users.end()) {
-                        std::cerr << "user not found: " << username << std::endl;
-                        exit(1);
+                        throw ProductNotFoundException(username);
                     }
 
-                    if (current_order != nullptr) {
-                        orders.push_back(std::move(*current_order));
+                    orders.emplace_back(*userIt);
+                } else {
+                    if (orders.empty()) continue;
+
+                    auto productIt = std::find_if(products.begin(), products.end(),
+                                                  [&line](const std::unique_ptr<Product>& p) { return p->getName() == line; });
+
+                    if (productIt == products.end()) {
+                        throw ProductNotFoundException(line);
                     }
 
-                    current_order = new Order(*userIt);
-
-                    continue;
+                    orders.back().addProduct(**productIt);
                 }
-
-                productName = line;
-
-
-                auto productIt = std::find_if(products.begin(), products.end(), [&productName](const std::unique_ptr<Product>& p) {
-                    return p->getName() == productName;
-                });
-
-                if (productIt == products.end()) {
-                    std::cerr << "product not found: " << productName << std::endl;
-                    exit(1);
-                }
-
-                current_order->addProduct(**productIt);
-            } while (std::getline(input, line));
-
-            orders.push_back(std::move(*current_order));
+            }
+        } catch (const std::exception& e) {
+            Logger::getInstance() += std::string("Error while loading data: ") + e.what();
+            throw;
         }
     }
-
 }
 
 void Catalog::displayProducts() const {
     std::cout << " ========================= Products ========================== " << std::endl;
-
     for (const auto& product : products) {
         product->display();
     }
 }
 
 void Catalog::displayUsers() const {
-    std::cout << " -========================= Users =========================== " << std::endl;
-
+    std::cout << " ========================= Users =========================== " << std::endl;
     for (const auto& user : users) {
         user.display();
     }
@@ -283,7 +276,6 @@ void Catalog::displayUsers() const {
 
 void Catalog::displayOrders() const {
     std::cout << " ========================= Orders =========================== " << std::endl;
-
     for (const auto& order : orders) {
         order.display();
     }
@@ -291,10 +283,8 @@ void Catalog::displayOrders() const {
 
 std::ostream& operator<<(std::ostream& os, const Catalog& catalog) {
     os << " ========================= Orders =========================== " << std::endl;
-
     for (const auto& order : catalog.orders) {
         os << order;
     }
-
     return os;
 }

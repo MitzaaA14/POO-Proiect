@@ -103,6 +103,15 @@ build CMakeFiles/oop.dir/Catalog.cpp.obj: CXX_COMPILER__oop_unscanned_Debug C$:/
   TARGET_COMPILE_PDB = CMakeFiles\oop.dir\
   TARGET_PDB = oop.pdb
 
+build CMakeFiles/oop.dir/Logger.cpp.obj: CXX_COMPILER__oop_unscanned_Debug C$:/Users/preom/work/POO-Proiect/Logger.cpp || cmake_object_order_depends_target_oop
+  DEP_FILE = CMakeFiles\oop.dir\Logger.cpp.obj.d
+  FLAGS = -g -std=c++23 -fdiagnostics-color=always -Wall -Wextra -pedantic
+  INCLUDES = -isystem C:/Users/preom/work/POO-Proiect/generated/include
+  OBJECT_DIR = CMakeFiles\oop.dir
+  OBJECT_FILE_DIR = CMakeFiles\oop.dir
+  TARGET_COMPILE_PDB = CMakeFiles\oop.dir\
+  TARGET_PDB = oop.pdb
+
 
 # =============================================================================
 # Link build statements for EXECUTABLE target oop
@@ -111,7 +120,7 @@ build CMakeFiles/oop.dir/Catalog.cpp.obj: CXX_COMPILER__oop_unscanned_Debug C$:/
 #############################################
 # Link the executable oop.exe
 
-build oop.exe: CXX_EXECUTABLE_LINKER__oop_Debug CMakeFiles/oop.dir/main.cpp.obj CMakeFiles/oop.dir/generated/src/Helper.cpp.obj CMakeFiles/oop.dir/User.cpp.obj CMakeFiles/oop.dir/Product.cpp.obj CMakeFiles/oop.dir/Order.cpp.obj CMakeFiles/oop.dir/Catalog.cpp.obj
+build oop.exe: CXX_EXECUTABLE_LINKER__oop_Debug CMakeFiles/oop.dir/main.cpp.obj CMakeFiles/oop.dir/generated/src/Helper.cpp.obj CMakeFiles/oop.dir/User.cpp.obj CMakeFiles/oop.dir/Product.cpp.obj CMakeFiles/oop.dir/Order.cpp.obj CMakeFiles/oop.dir/Catalog.cpp.obj CMakeFiles/oop.dir/Logger.cpp.obj
   FLAGS = -g
   LINK_LIBRARIES = -lkernel32 -luser32 -lgdi32 -lwinspool -lshell32 -lole32 -loleaut32 -luuid -lcomdlg32 -ladvapi32
   OBJECT_DIR = CMakeFiles\oop.dir

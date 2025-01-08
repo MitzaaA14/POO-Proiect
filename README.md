@@ -1,4 +1,6 @@
-# Nu primesc notă pentru că nu am pus titlu și descriere
+# Catalog Produse
+
+Proiectul consta in gestionarea unor Comenzi compunse din mai multe Produse, de mai multe tipuri Electronice, Mancare si Haine, permitand si adaugarea altor tipuri de produse, si date despre anumiti Useri. 
 
 ### Important!
 Aveți voie cu cod generat de modele de limbaj la care nu ați contribuit semnificativ doar în folder-ul `generated`.

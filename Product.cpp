@@ -1,11 +1,15 @@
 #include "Product.h"
-#include <iostream>
+#include "Logger.h"
 
-// Implementarea classelor din Product.h
+// Non-member operator overloading implementation
+Product& operator+(Product& product, double priceIncrease) {
+    product.price += priceIncrease;
+    Logger::getInstance() += "Increased price of " + product.getName() + " by " + std::to_string(priceIncrease);
+    return product;
+}
 
 std::ostream& operator<<(std::ostream& os, const Product& product) {
     product.print(os);
-
     return os;
 }
 

@@ -57,6 +57,9 @@ add_executable(${MAIN_EXECUTABLE_NAME}
         Order.cpp
         Catalog.h
         Catalog.cpp
+        Logger.h
+        CustomExceptions.h
+        Logger.cpp
 )
 
 include(cmake/CompilerFlags.cmake)

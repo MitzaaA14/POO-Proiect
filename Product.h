@@ -1,9 +1,11 @@
 #ifndef PRODUCT_H
 #define PRODUCT_H
 
+#include "CustomExceptions.h"
 #include <iostream>
 #include <string>
 #include <memory>
+#include <regex>
 
 class Product {
 protected:
@@ -16,12 +18,27 @@ public:
     Product(const std::string& name, double price) : name(name), price(price) {}
     virtual ~Product() = default;
 
-    virtual void display() const = 0; // Funcție virtuală pură
-    virtual std::unique_ptr<Product> clone() const = 0; // Constructor virtual
+    virtual void display() const = 0;
+    virtual std::unique_ptr<Product> clone() const = 0;
 
     double getPrice() const { return price; }
     const std::string& getName() const { return name; }
 
+    // Static method for price validation
+    static bool isValidPrice(const std::string& price) {
+        std::regex pricePattern(R"(^\d+(\.\d{1,2})?$)");
+        return std::regex_match(price, pricePattern);
+    }
+
+    static double validateAndParsePrice(const std::string& priceStr) {
+        if (!isValidPrice(priceStr)) {
+            throw InvalidPriceException(priceStr);
+        }
+        return std::stod(priceStr);
+    }
+
+    // Non-member operator overloading declaration
+    friend Product& operator+(Product& product, double priceIncrease);
     friend std::ostream& operator<<(std::ostream& os, const Product& product);
 };
 
@@ -38,9 +55,7 @@ public:
             : Product(name, price), warranty(warranty) {}
 
     void display() const override;
-
     std::unique_ptr<Product> clone() const override;
-
 };
 
 class Food : public Product {
@@ -56,7 +71,6 @@ public:
             : Product(name, price), expirationDate(expirationDate) {}
 
     void display() const override;
-
     std::unique_ptr<Product> clone() const override;
 };
 
@@ -73,10 +87,8 @@ public:
             : Product(name, price), size(size) {}
 
     void display() const override;
-
     std::unique_ptr<Product> clone() const override;
 };
-
 
 template <class T>
 class Generic : public Product {
@@ -95,12 +107,11 @@ public:
 
     void display() const override {
         print(std::cout);
-    };
+    }
 
     std::unique_ptr<Product> clone() const override {
         return std::make_unique<Generic>(*this);
-    };
+    }
 };
 
 #endif // PRODUCT_H
-
